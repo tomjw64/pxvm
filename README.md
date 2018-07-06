@@ -19,3 +19,16 @@ Commands:
   - Use the system installed Prince XML
 - `pxvm u|use <name>`
   - Use a previously added and named Prince XML version
+### Sample Usage
+```
+$pxvm list
+Available Prince Versions:
+None
+$pxvm add v11 path/to/princev11.tar.gz
+Added Prince XML version with name v11
+$pxvm list
+Available Prince Versions:
+v11
+$pxvm use v11
+Now using Prince XML with name v11
+```
