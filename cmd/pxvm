@@ -74,6 +74,8 @@ function do_add() {
 
   [ $DEBUG ] && echo "Moving back to ${pxvm_initial_wd}"
   cd ${pxvm_initial_wd}
+
+  echo -e "\033[32mAdded Prince XML version with name ${added_name}\033[0m"
 }
 
 function do_list() {
@@ -86,7 +88,7 @@ function do_list() {
 
   [ $DEBUG ] && echo "Moving to versions directory: ${versions_path}"
   cd ${versions_path}
-  echo "Available Prince Versions:"
+  echo "Available Prince XML Versions:"
   local prince_versions=($(find */ -maxdepth 0 -type d 2>/dev/null))
   if [ -z ${prince_versions[0]} ]; then
     echo "None"
@@ -139,11 +141,13 @@ function do_use() {
   [ $DEBUG ] && echo "creating new exec path to ${pxvm_install_dir}/${use_path}/bin/prince in ${pxvm_install_dir}/${use_bin}"
   echo "#! /bin/bash" >> ${use_bin}
   echo "${pxvm_install_dir}/${use_path}/bin/prince \$@" >> ${use_bin}
-  echo "Making executable"
+  [ $DEBUG ] && echo "Making executable"
   chmod +x ${use_bin}
 
   [ $DEBUG ] && echo "Moving back to ${pxvm_initial_wd}"
   cd ${pxvm_initial_wd}
+
+  echo -e "\033[32mNow using Prince XML with name ${use_name}\033[0m"
 }
 
 if [ -z ${pxvm_sub_command} ]; then
