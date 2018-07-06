@@ -1,0 +1,34 @@
+#!/bin/bash
+
+initial_wd=$(pwd)
+install_dir=${HOME}/.pxvm
+
+script_dir=$(dirname ${BASH_SOURCE[@]})
+script_dir_abs="$( cd ${script_dir} && pwd )"
+
+echo "Installing PXVM at ${install_dir}"
+[ $DEBUG ] && echo "Present directory: ${initial_wd}"
+[ $DEBUG ] && echo "Install script directory: ${script_dir_abs}"
+
+[ $DEBUG ] && echo "Creating install directory: ${install_dir}"
+[ -d $install_dir ] || mkdir $install_dir
+[ $DEBUG ] && echo "Moving to install directory: ${install_dir}"
+cd $install_dir
+[ $DEBUG ] && echo "Creating install subdirectories"
+[ -d versions ] || mkdir versions
+[ -d bin ] || mkdir bin
+
+[ $DEBUG ] && echo "Copying command into install bin"
+cp ${script_dir_abs}/../cmd/* ./bin/
+
+if [ -z $(echo $PATH | grep "\.pxvm") ]; then
+  [ $DEBUG ] && echo "Adding PXVM shim into PATH"
+  echo "export PATH=\"\${HOME}/.pxvm/bin:\${PATH}\"" >> ~/.bashrc
+else
+  echo -e "\033[33mInfo: PXVM already found in PATH\033[0m"
+fi
+
+[ $DEBUG ] && echo "Moving back to ${initial_wd}"
+cd ${initial_wd}
+echo -e '\e[0;32mInstallation successful.'
+
