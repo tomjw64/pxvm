@@ -23,6 +23,7 @@ cp ${script_dir_abs}/../cmd/* ./bin/
 
 if [ -z $(echo $PATH | grep "\.pxvm") ]; then
   [ $DEBUG ] && echo "Adding PXVM shim into PATH"
+  export PATH=${install_dir}/bin:$PATH
   echo "export PATH=\"\${HOME}/.pxvm/bin:\${PATH}\"" >> ~/.bashrc
 else
   echo -e "\033[33mInfo: PXVM already found in PATH\033[0m"
