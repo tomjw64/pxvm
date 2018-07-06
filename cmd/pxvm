@@ -134,7 +134,7 @@ function do_use() {
 
   local use_bin=bin/prince
   if [ -f ${use_bin} ]; then
-    echo "Removing old exec path"
+    [ $DEBUG ] && echo "Removing old exec path"
     rm ${use_bin}
   fi
 
