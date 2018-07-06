@@ -1,5 +1,5 @@
 # PXVM
-Prince XML Version Manager
+A basic Prince XML version manager
 
 ## Installation
 - Clone the repository into the directory of your choosing
