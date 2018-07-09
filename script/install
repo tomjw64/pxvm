@@ -3,7 +3,7 @@ function pxvm_install() {
   local install_dir=${HOME}/.pxvm
 
   local script_dir=$(dirname ${0})
-  local script_dir_abs="$( cd ${script_dir} && pwd )"
+  local script_dir_abs="$(cd ${script_dir} && pwd)"
 
   # Function copied from the nvm repo
   # See https://github.com/creationix/nvm for license and copywright
