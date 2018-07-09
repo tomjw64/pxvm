@@ -1,2 +1,3 @@
 echo "Setting up shim in PATH"
 export PATH=${HOME}/.pxvm/bin:${PATH}
+echo "Done.

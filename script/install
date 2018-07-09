@@ -83,7 +83,7 @@ function pxvm_install() {
 
   [ $DEBUG ] && echo "Moving back to ${initial_wd}"
   cd ${initial_wd}
-  echo -e '\e[0;32mInstallation successful.'
+  echo -e "\e[32mInstallation successful.\033[0m"
 }
 
 pxvm_install
