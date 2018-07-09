@@ -4,8 +4,7 @@ A basic Prince XML version manager
 ## Installation
 - Clone the repository into the directory of your choosing
 - Move to the cloned directory
-- `./script/install`
-- Then either restart to update your PATH or use `source ./script/instant_shim` to get going immediately
+- Run command `./script/install && source ./script/instant_shim`
 - Try `pxvm` to test that the installation was successful
 
 ## Usage
