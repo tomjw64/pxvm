@@ -9,11 +9,16 @@ pxvm_arg_list=($pxvm_args)
 pxvm_initial_wd=$(pwd)
 pxvm_install_dir=${HOME}/.pxvm
 
+function pxvm_do_version() {
+  echo "PXVM Version: 0.0.1+"
+}
+
 function pxvm_do_help() {
-  echo "PXVM Version ???"
   echo "Commands:"
   echo "  pxvm h|help"
   echo "    => Show help message."
+  echo "  pxvm v|version"
+  echo "    => Show version."
   echo "  pxvm a|add <name> <source>"
   echo "    => Add a Prince XML version."
   echo "      name: Name of version (user-defined)"
@@ -156,6 +161,9 @@ else
   case "${pxvm_sub_command}" in
     h | help)
       pxvm_do_help
+      ;;
+    v | version)
+      pxvm_do_version
       ;;
     a | add)
       pxvm_do_add
