@@ -9,7 +9,7 @@ pxvm_arg_list=($pxvm_args)
 pxvm_initial_wd=$(pwd)
 pxvm_install_dir=${HOME}/.pxvm
 
-function do_help() {
+function pxvm_do_help() {
   echo "PXVM Version ???"
   echo "Commands:"
   echo "  pxvm h|help"
@@ -27,10 +27,10 @@ function do_help() {
   echo "      name: Name of (previously added) version"
 }
 
-function do_add() {
+function pxvm_do_add() {
   if ! [ -d ${pxvm_install_dir} ]; then
     echo "Error: PXVM install directory not detected"
-    do_help
+    pxvm_do_help
     exit 1
   fi
 
@@ -38,7 +38,7 @@ function do_add() {
   local added_path_relative=${pxvm_arg_list[1]}
   if [ -z ${added_name} ] || [ -z ${added_path_relative} ]; then
     echo "Error: Not all arguments supplied"
-    do_help
+    pxvm_do_help
     exit 1
   fi
 
@@ -78,11 +78,11 @@ function do_add() {
   echo -e "\033[32mAdded Prince XML version with name ${added_name}\033[0m"
 }
 
-function do_list() {
+function pxvm_do_list() {
   local versions_path=${pxvm_install_dir}/versions
   if ! [ -d ${versions_path} ]; then
     echo "Error: Prince versions install directory not detected"
-    do_help
+    pxvm_do_help
     exit 1
   fi
 
@@ -99,7 +99,7 @@ function do_list() {
   cd ${pxvm_initial_wd}
 }
 
-function do_system() {
+function pxvm_do_system() {
   local pxvm_prince_path=${pxvm_install_dir}/bin/prince
   if ! [ -f ${pxvm_prince_path} ]; then
     echo "Error: PXVM already using system install of Prince XML"
@@ -109,12 +109,12 @@ function do_system() {
   rm ${pxvm_prince_path}
 }
 
-function do_use() {
+function pxvm_do_use() {
   local use_name=${pxvm_arg_list[0]}
   
   if [ -z ${use_name} ]; then
     echo "Error: Not all arguments supplied"
-    do_help
+    pxvm_do_help
     exit 1
   fi
 
@@ -128,7 +128,7 @@ function do_use() {
   local use_path=versions/${use_name}
   if ! [ -d ${use_path} ]; then
     echo "Error: Cannot find added Prince version with name ${use_name}"
-    do_help
+    pxvm_do_help
     exit 1
   fi
 
@@ -151,23 +151,23 @@ function do_use() {
 }
 
 if [ -z ${pxvm_sub_command} ]; then
-  do_help
+  pxvm_do_help
 else
   case "${pxvm_sub_command}" in
     h | help)
-      do_help
+      pxvm_do_help
       ;;
     a | add)
-      do_add
+      pxvm_do_add
       ;;
     l | list)
-      do_list
+      pxvm_do_list
       ;;
     s | system)
-      do_system
+      pxvm_do_system
       ;;
     u | use)
-      do_use
+      pxvm_do_use
       ;;
     *)
       echo "Error: Unrecognized subcommand. Try pxvm help."

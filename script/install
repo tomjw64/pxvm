@@ -1,44 +1,89 @@
-#!/bin/bash
+function pxvm_install() {
+  local initial_wd=$(pwd)
+  local install_dir=${HOME}/.pxvm
 
-initial_wd=$(pwd)
-install_dir=${HOME}/.pxvm
+  local script_dir=$(dirname ${0})
+  local script_dir_abs="$( cd ${script_dir} && pwd )"
 
-script_dir=$(dirname ${BASH_SOURCE[@]})
-script_dir_abs="$( cd ${script_dir} && pwd )"
+  # Function copied from the nvm repo
+  # See https://github.com/creationix/nvm for license and copywright
+  pxvm_try_profile() {
+    if [ -z "${1-}" ] || [ ! -f "${1}" ]; then
+      return 1
+    fi
+    echo "${1}"
+  }
 
-echo "Installing PXVM at ${install_dir}"
-[ $DEBUG ] && echo "Present directory: ${initial_wd}"
-[ $DEBUG ] && echo "Install script directory: ${script_dir_abs}"
+  # Function copied from the nvm repo
+  # See https://github.com/creationix/nvm for license and copywright
+  pxvm_detect_profile() {
+    if [ "${PROFILE-}" = '/dev/null' ]; then
+      # the user has specifically requested NOT to have nvm touch their profile
+      return
+    fi
 
-[ $DEBUG ] && echo "Creating install directory: ${install_dir}"
-[ -d $install_dir ] || mkdir $install_dir
-[ $DEBUG ] && echo "Moving to install directory: ${install_dir}"
-cd $install_dir
-[ $DEBUG ] && echo "Creating install subdirectories"
-[ -d versions ] || mkdir versions
-[ -d bin ] || mkdir bin
+    if [ -n "${PROFILE}" ] && [ -f "${PROFILE}" ]; then
+      echo "${PROFILE}"
+      return
+    fi
 
-[ $DEBUG ] && echo "Copying command into install bin"
-cp ${script_dir_abs}/../cmd/* ./bin/
+    local detected_profile
+    detected_profile=''
 
-if [ -z $(echo $PATH | grep "\.pxvm") ]; then
-  [ $DEBUG ] && echo "Adding PXVM shim into PATH"
-  export PATH=${install_dir}/bin:$PATH
-  if [ -f /etc/paths ]; then
-    [ $DEBUG ] && echo "Guessing this is a Mac"
-    echo "\"\${HOME}/.pxvm/bin" | cat - /etc/paths > temp && mv temp /etc/paths
-  elif [ -f ~/.bashrc ]; then
-    [ $DEBUG ] && echo "Guessing you use bashrc"
-    echo "export PATH=\"\${HOME}/.pxvm/bin:\${PATH}\"" >> ~/.bashrc
-  else
-    [ $DEBUG ] && echo "Let's try bash_profile if nothing else"
-    echo "export PATH=\"\${HOME}/.pxvm/bin:\${PATH}\"" >> ~/.bash_profile
+    if [ -n "${BASH_VERSION-}" ]; then
+      if [ -f "$HOME/.bashrc" ]; then
+        detected_profile="$HOME/.bashrc"
+      elif [ -f "$HOME/.bash_profile" ]; then
+        detected_profile="$HOME/.bash_profile"
+      fi
+    elif [ -n "${ZSH_VERSION-}" ]; then
+      detected_profile="$HOME/.zshrc"
+    fi
+
+    if [ -z "$detected_profile" ]; then
+      for each_profile in ".profile" ".bashrc" ".bash_profile" ".zshrc"
+      do
+        if detected_profile="$(nvm_try_profile "${HOME}/${each_profile}")"; then
+          break
+        fi
+      done
+    fi
+
+    if [ ! -z "$detected_profile" ]; then
+      echo "$detected_profile"
+    fi
+  }
+
+  echo "Installing PXVM at ${install_dir}"
+  [ $DEBUG ] && echo "Present directory: ${initial_wd}"
+  [ $DEBUG ] && echo "Install script directory: ${script_dir_abs}"
+
+  [ $DEBUG ] && echo "Creating install directory: ${install_dir}"
+  [ -d $install_dir ] || mkdir $install_dir
+  [ $DEBUG ] && echo "Moving to install directory: ${install_dir}"
+  cd $install_dir
+  [ $DEBUG ] && echo "Creating install subdirectories"
+  [ -d versions ] || mkdir versions
+  [ -d bin ] || mkdir bin
+
+  [ $DEBUG ] && echo "Copying command into install bin"
+  cp ${script_dir_abs}/../cmd/* ./bin/
+
+  local pxvm_profile=$(pxvm_detect_profile)
+  if [ -z pxvm_profile ]; then
+    echo -e "\033[31mError: Could not detect a profile.\033[0m"
+    exit 1
   fi
-else
-  echo -e "\033[33mInfo: PXVM already found in PATH\033[0m"
-fi
 
-[ $DEBUG ] && echo "Moving back to ${initial_wd}"
-cd ${initial_wd}
-echo -e '\e[0;32mInstallation successful.'
+  if ! $(grep -qc "\.pxvm" $pxvm_profile); then
+    echo "export PATH=\"\${HOME}/.pxvm/bin:\${PATH}\"" >> $pxvm_profile
+  else
+    echo -e "\033[33mInfo: PXVM already found in profile\033[0m"
+  fi
 
+  [ $DEBUG ] && echo "Moving back to ${initial_wd}"
+  cd ${initial_wd}
+  echo -e '\e[0;32mInstallation successful.'
+}
+
+pxvm_install
