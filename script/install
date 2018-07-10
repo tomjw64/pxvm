@@ -57,6 +57,7 @@ function pxvm_install() {
   }
 
   local pxvm_profile=$(pxvm_detect_profile)
+  [ $DEBUG ] && echo "Profile found: $pxvm_profile"
   if [ -z pxvm_profile ]; then
     echo -e "\033[31mError: Could not detect a profile.\033[0m"
     exit 1
