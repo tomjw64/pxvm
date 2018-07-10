@@ -1,3 +1,5 @@
 echo "Setting up shim in PATH"
 export PATH=${HOME}/.pxvm/bin:${PATH}
-echo "Done.
+echo "Resetting cache for prince command"
+hash -d prince 2>/dev/null
+echo -e "\033[32mDone.\033[0m"

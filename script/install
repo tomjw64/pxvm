@@ -1,3 +1,5 @@
+#! /bin/bash
+
 function pxvm_install() {
   local initial_wd=$(pwd)
   local install_dir=${HOME}/.pxvm
@@ -54,6 +56,12 @@ function pxvm_install() {
     fi
   }
 
+  local pxvm_profile=$(pxvm_detect_profile)
+  if [ -z pxvm_profile ]; then
+    echo -e "\033[31mError: Could not detect a profile.\033[0m"
+    exit 1
+  fi
+
   echo "Installing PXVM at ${install_dir}"
   [ $DEBUG ] && echo "Present directory: ${initial_wd}"
   [ $DEBUG ] && echo "Install script directory: ${script_dir_abs}"
@@ -66,16 +74,29 @@ function pxvm_install() {
   [ -d versions ] || mkdir versions
   [ -d bin ] || mkdir bin
 
-  [ $DEBUG ] && echo "Copying command into install bin"
+  [ $DEBUG ] && echo "Copying (and maybe overwriting) command into install bin"
   cp ${script_dir_abs}/../cmd/* ./bin/
 
-  local pxvm_profile=$(pxvm_detect_profile)
-  if [ -z pxvm_profile ]; then
-    echo -e "\033[31mError: Could not detect a profile.\033[0m"
-    exit 1
-  fi
+  [ $DEBUG ] && echo "Clean up old exec path and clear path hash"
+  local use_bin="./bin/prince"
+  [ -f ${use_bin} ] && rm ${use_bin}
+  hash -d prince 2>/dev/null
 
-  if ! $(grep -qc "\.pxvm" $pxvm_profile); then
+  [ $DEBUG ] && echo "Attempting to make executable with the system version"
+  local system_prince_path=$(command -v prince)
+  if [ -n $system_prince_path ] && ! echo $system_prince_path | grep -qc ".pxvm"; then
+    [ $DEBUG ] && echo "System executable found at ${system_prince_path}"
+    echo "#! /bin/bash" >> ${use_bin}
+    echo "${system_prince_path} \$@" >> ${use_bin}
+  else
+    [ $DEBUG ] && echo "No system executable of prince found"
+    echo "echo \"No version of PrinceXML has been specified for use.\"" >> ${use_bin}
+    echo "echo \"Try 'pxvm help' \"" >> ${use_bin}
+  fi
+  chmod +x ${use_bin}
+  hash -d prince 2>/dev/null
+
+  if ! grep -qc "\.pxvm" $pxvm_profile; then
     echo "export PATH=\"\${HOME}/.pxvm/bin:\${PATH}\"" >> $pxvm_profile
   else
     echo -e "\033[33mInfo: PXVM already found in profile\033[0m"
@@ -83,7 +104,7 @@ function pxvm_install() {
 
   [ $DEBUG ] && echo "Moving back to ${initial_wd}"
   cd ${initial_wd}
-  echo -e "\e[32mInstallation successful.\033[0m"
+  echo -e "\033[32mInstallation successful.\033[0m"
 }
 
-pxvm_install
+pxvm_install $@

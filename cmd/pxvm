@@ -1,16 +1,36 @@
 #!/bin/bash
 
+function pxvm_debug() {
+  [ $DEBUG ] && echo -e "\033[1mDebug: ${1}\033[0m"
+}
+
+function pxvm_warn() {
+  echo -e "\033[33mWarning: ${1}\033[0m"
+}
+
+function pxvm_info() {
+  echo -e "\033[33mInfo: ${1}\033[0m"
+}
+
+function pxvm_error() {
+  echo -e "\033[31mError: ${1}\033[0m"
+}
+
+function pxvm_success() {
+  echo -e "\033[32mSuccess: ${1}\033[0m"
+}
+
 pxvm_sub_command=${1}
-[ $DEBUG ] && echo "Got subcommand ${PXVM_SUB_COMMAND}"
+pxvm_debug "Got subcommand ${PXVM_SUB_COMMAND}"
 shift
 pxvm_args=$*
 pxvm_arg_list=($pxvm_args)
-[ $DEBUG ] && echo "Got args ${pxvm_args}"
+pxvm_debug "Got args ${pxvm_args}"
 pxvm_initial_wd=$(pwd)
 pxvm_install_dir=${HOME}/.pxvm
 
 function pxvm_do_version() {
-  echo "PXVM Version: 0.0.1+"
+  echo "PXVM Version: 0.0.2+"
 }
 
 function pxvm_do_help() {
@@ -26,7 +46,7 @@ function pxvm_do_help() {
   echo "  pxvm l|list"
   echo "    => List added Prince XML versions."
   echo "  pxvm s|system"
-  echo "    => Use the system-installed Prince XML"
+  echo "    => Use the system-installed Prince XML."
   echo "  pxvm u|use <name>"
   echo "    => Use a specified Prince XML version."
   echo "      name: Name of (previously added) version"
@@ -34,16 +54,14 @@ function pxvm_do_help() {
 
 function pxvm_do_add() {
   if ! [ -d ${pxvm_install_dir} ]; then
-    echo "Error: PXVM install directory not detected"
-    pxvm_do_help
+    pxvm_error "PXVM install directory not detected"
     exit 1
   fi
 
   local added_name=${pxvm_arg_list[0]}
   local added_path_relative=${pxvm_arg_list[1]}
   if [ -z ${added_name} ] || [ -z ${added_path_relative} ]; then
-    echo "Error: Not all arguments supplied"
-    pxvm_do_help
+    pxvm_error "Not all arguments supplied"
     exit 1
   fi
 
@@ -51,47 +69,57 @@ function pxvm_do_add() {
   local added_extracted_dirname=${added_path_basename%.tar.gz}
 
   if ! [ -f ${added_path_relative} ]; then
-    echo "Error: Could not find relative file at ${added_path_relative}"
+    pxvm_error "Could not find relative file at ${added_path_relative}"
     exit 1
   fi
 
   local temp_dir=${pxvm_install_dir}/tmp
-  [ $DEBUG ] && echo "Creating temp directory for extraction"
+  pxvm_debug "Creating temp directory for extraction"
   mkdir ${temp_dir}
-  [ $DEBUG ] && echo "Extracting into temp directory"
+  pxvm_debug "Extracting into temp directory"
   tar -xzf ${added_path_relative} -C ${temp_dir}
 
-  [ $DEBUG ] && echo "Moving to install directory: ${pxvm_install_dir}"
+  pxvm_debug "Moving to install directory: ${pxvm_install_dir}"
   cd ${pxvm_install_dir}
 
   local version_dir=versions/${added_name}
   if [ -d ${version_dir} ]; then
-    [ $DEBUG ] && echo "Removing old version of name ${added_name}"
+    pxvm_debug "Removing old version of name ${added_name}"
     rm -rf ${version_dir}
   fi
-  [ $DEBUG ] && echo "Creating version directory: ${version_dir}"
+  pxvm_debug "Creating version directory: ${version_dir}"
   mkdir ${version_dir}
-  [ $DEBUG ] && echo "Copying extracted files to version directory"
+  pxvm_debug "Copying extracted files to version directory"
   cp -r tmp/${added_extracted_dirname}/lib/prince/* ${version_dir}
   
-  [ $DEBUG ] && echo "Removing temp directory"
+  pxvm_debug "Removing temp directory"
   rm -rf ./tmp
 
-  [ $DEBUG ] && echo "Moving back to ${pxvm_initial_wd}"
+  pxvm_debug "Moving back to ${pxvm_initial_wd}"
   cd ${pxvm_initial_wd}
 
-  echo -e "\033[32mAdded Prince XML version with name ${added_name}\033[0m"
+  pxvm_success "Added Prince XML version with name ${added_name}"
 }
 
 function pxvm_do_list() {
   local versions_path=${pxvm_install_dir}/versions
   if ! [ -d ${versions_path} ]; then
-    echo "Error: Prince versions install directory not detected"
-    pxvm_do_help
+    pxvm_error "Prince versions install directory not detected"
     exit 1
   fi
 
-  [ $DEBUG ] && echo "Moving to versions directory: ${versions_path}"
+  local currently_using=$(cat ${pxvm_install_dir}/bin/prince)
+  local using_location=${currently_using#*/bash}
+  using_location=${using_location%\$@}
+  using_location=$(echo $using_location | tr -d '\n')
+  currently_using_version=${using_location/#*\/versions\//}
+  if [ "$using_location" = "$currently_using_version" ]; then
+    currently_using_version="system"
+  else
+    currently_using_version=${currently_using_version%%\/*}
+  fi
+
+  pxvm_debug "Moving to versions directory: ${versions_path}"
   cd ${versions_path}
   echo "Available Prince XML Versions:"
   local prince_versions=($(find */ -maxdepth 0 -type d 2>/dev/null))
@@ -101,58 +129,78 @@ function pxvm_do_list() {
     for i in ${prince_versions[@]}; do echo -e "\033[96m${i%%/}\033[0m"; done
   fi
 
+  echo -e "Currently Using: \033[96m${currently_using_version} @ ${using_location}\033[0m"
+
   cd ${pxvm_initial_wd}
 }
 
 function pxvm_do_system() {
-  local pxvm_prince_path=${pxvm_install_dir}/bin/prince
-  if ! [ -f ${pxvm_prince_path} ]; then
-    echo "Error: PXVM already using system install of Prince XML"
-    exit 1
+  pxvm_debug "Moving to install directory: ${pxvm_install_dir}"
+  cd $pxvm_install_dir
+
+  local use_bin="./bin/prince"
+  local tmp_prince="./tmp_prince"
+
+  pxvm_debug "Moving current exec path to temp directory"
+  [ -f ${use_bin} ] && mv ${use_bin} ${tmp_prince}
+  hash -d prince 2>/dev/null
+  
+  pxvm_debug "Attempting to make executable with the system version"
+  local system_prince_path=$(command -v prince)
+  if [ -n $system_prince_path ] && ! echo $system_prince_path | grep -qc ".pxvm"; then
+    pxvm_debug "Clean up old exec path and clear path hash"
+    [ -f ${tmp_prince} ] && rm ${tmp_prince}
+
+    pxvm_debug "System executable found at ${system_prince_path}"
+    echo "#! /bin/bash" >> ${use_bin}
+    echo "${system_prince_path} \$@" >> ${use_bin}
+
+    chmod +x ${use_bin}
+    hash -d prince 2>/dev/null
+    pxvm_success "Now using system version of Prince XML"
+  else
+    [ -f ${tmp_prince} ] && mv ${tmp_prince} ${use_bin}
+    pxvm_error "No system executable of Prince XML found"
   fi
-  [ $DEBUG ] && echo "Removing PXVM execution path from shim"
-  rm ${pxvm_prince_path}
+
+  pxvm_debug "Moving back to initial directory: ${pxvm_initial_wd}"
 }
 
 function pxvm_do_use() {
   local use_name=${pxvm_arg_list[0]}
   
   if [ -z ${use_name} ]; then
-    echo "Error: Not all arguments supplied"
-    pxvm_do_help
+    pxvm_error "Not all arguments supplied"
     exit 1
   fi
 
   if ! [ -d ${pxvm_install_dir} ]; then
-    echo "Error: PXVM install directory not detected"
+    pxvm_error "PXVM install directory not detected"
     exit 1
   fi
-  [ $DEBUG ] && echo "Moving to install directory: ${pxvm_install_dir}"
+  pxvm_debug "Moving to install directory: ${pxvm_install_dir}"
   cd ${pxvm_install_dir}
 
   local use_path=versions/${use_name}
   if ! [ -d ${use_path} ]; then
-    echo "Error: Cannot find added Prince version with name ${use_name}"
-    pxvm_do_help
+    pxvm_error "Cannot find added Prince version with name ${use_name}"
     exit 1
   fi
 
+  pxvm_debug "Clean up old exec path and clear path hash"
   local use_bin=bin/prince
-  if [ -f ${use_bin} ]; then
-    [ $DEBUG ] && echo "Removing old exec path"
-    rm ${use_bin}
-  fi
+  [ -f ${use_bin} ] && rm ${use_bin}
 
-  [ $DEBUG ] && echo "creating new exec path to ${pxvm_install_dir}/${use_path}/bin/prince in ${pxvm_install_dir}/${use_bin}"
+  pxvm_debug "creating new exec path to ${pxvm_install_dir}/${use_path}/bin/prince in ${pxvm_install_dir}/${use_bin}"
   echo "#! /bin/bash" >> ${use_bin}
   echo "${pxvm_install_dir}/${use_path}/bin/prince \$@" >> ${use_bin}
-  [ $DEBUG ] && echo "Making executable"
+  pxvm_debug "Making executable"
   chmod +x ${use_bin}
 
-  [ $DEBUG ] && echo "Moving back to ${pxvm_initial_wd}"
+  pxvm_debug "Moving back to ${pxvm_initial_wd}"
   cd ${pxvm_initial_wd}
 
-  echo -e "\033[32mNow using Prince XML with name ${use_name}\033[0m"
+  pxvm_success "Now using Prince XML with name ${use_name}"
 }
 
 if [ -z ${pxvm_sub_command} ]; then
@@ -178,7 +226,7 @@ else
       pxvm_do_use
       ;;
     *)
-      echo "Error: Unrecognized subcommand. Try pxvm help."
+      pxvm_error "Unrecognized subcommand. Try pxvm help."
       exit 1
   esac
 fi
