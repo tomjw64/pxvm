@@ -1,11 +1,8 @@
-#! /bin/bash
+#! /usr/bin/env bash
 
 function pxvm_install() {
   local initial_wd=$(pwd)
   local install_dir=${HOME}/.pxvm
-
-  local script_dir=$(dirname ${0})
-  local script_dir_abs="$(cd ${script_dir} && pwd)"
 
   # Function copied from the nvm repo
   # See https://github.com/creationix/nvm for license and copywright
@@ -60,12 +57,17 @@ function pxvm_install() {
   [ $DEBUG ] && echo "Profile found: $pxvm_profile"
   if [ -z pxvm_profile ]; then
     echo -e "\033[31mError: Could not detect a profile.\033[0m"
-    exit 1
+    return 1
   fi
 
+  echo "Detected profile: ${pxvm_profile}"
   echo "Installing PXVM at ${install_dir}"
   [ $DEBUG ] && echo "Present directory: ${initial_wd}"
-  [ $DEBUG ] && echo "Install script directory: ${script_dir_abs}"
+
+  if ! [ -d ./cmd/ ]; then
+    echo -e "\033[31mError: Files not found. Is pxvm the pwd?\033[0m"
+    return 1
+  fi
 
   [ $DEBUG ] && echo "Creating install directory: ${install_dir}"
   [ -d $install_dir ] || mkdir $install_dir
@@ -76,7 +78,7 @@ function pxvm_install() {
   [ -d bin ] || mkdir bin
 
   [ $DEBUG ] && echo "Copying (and maybe overwriting) command into install bin"
-  cp ${script_dir_abs}/../cmd/* ./bin/
+  cp ${initial_wd}/cmd/* ./bin/
 
   [ $DEBUG ] && echo "Clean up old exec path and clear path hash"
   local use_bin="./bin/prince"
@@ -109,3 +111,4 @@ function pxvm_install() {
 }
 
 pxvm_install $@
+return 0

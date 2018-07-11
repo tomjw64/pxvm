@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /usr/bin/env bash
 
 function pxvm_debug() {
   [ $DEBUG ] && echo -e "\033[1mDebug: ${1}\033[0m"
@@ -30,7 +30,7 @@ pxvm_initial_wd=$(pwd)
 pxvm_install_dir=${HOME}/.pxvm
 
 function pxvm_do_version() {
-  echo "PXVM Version: 0.0.2+"
+  echo "PXVM Version: 0.0.3+"
 }
 
 function pxvm_do_help() {
