@@ -8,7 +8,9 @@ A basic Prince XML version manager
 - Then either restart your shell or run `source ./script/instant_shim`
 - Try `pxvm` to test that the installation was successful
 
-*Note:* If you are a OSX user using Bash and your system cannot find the `pxvm` command after a shell restart, try adding `source ${HOME}/.bashrc` to `.bash_profile` in your home directory. As a one-liner, you can run: `echo -e "\nsource \${HOME}/.bashrc" >> ${HOME}/.bash_profile` 
+**Note:** If you are a OSX user on a Bash shell and your system cannot find the `pxvm` command after a shell restart, try adding `source ${HOME}/.bashrc` to `.bash_profile` in your home directory. As a one-liner, you can run: `echo -e "\nsource \${HOME}/.bashrc" >> ${HOME}/.bash_profile`
+
+**Note:** The `pxvm` command itself is installed on a per-shell basis. If you change what shell you are using, then you will need to run the installation script again. Re-running the install script will not wipe your added Prince XML versions.
 
 ## Usage
 Commands:
