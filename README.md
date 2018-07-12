@@ -4,8 +4,11 @@ A basic Prince XML version manager
 ## Installation
 - Clone the repository into the directory of your choosing
 - Move to the cloned directory
-- Run command `source ./script/install && source ./script/instant_shim`
+- Run command `source ./script/install`
+- Then either restart your shell or run `source ./script/instant_shim`
 - Try `pxvm` to test that the installation was successful
+
+*Note:* If you are a OSX user using Bash and your system cannot find the `pxvm` command after a shell restart, try adding `source ${HOME}/.bashrc` to `.bash_profile` in your home directory. As a one-liner, you can run: `echo -e "\nsource \${HOME}/.bashrc" >> ${HOME}/.bash_profile` 
 
 ## Usage
 Commands:
