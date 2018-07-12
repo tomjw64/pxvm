@@ -4,6 +4,7 @@ A basic Prince XML version manager
 ## Installation
 - Clone the repository into the directory of your choosing
 - Move to the cloned directory
+- _Optional_: If you want to explicitly determine which profile to install the path shim in , you can set the `PROFILE` variable before using the install script (e.g. `PROFILE=path/to/my/profile`).
 - Run command `source ./script/install`
 - Then either restart your shell or run `source ./script/instant_shim`
 - Try `pxvm` to test that the installation was successful
