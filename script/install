@@ -100,7 +100,7 @@ function pxvm_install() {
   hash -d prince 2>/dev/null
 
   if ! grep -qc "\.pxvm" $pxvm_profile; then
-    echo "export PATH=\"\${HOME}/.pxvm/bin:\${PATH}\"" >> $pxvm_profile
+    echo -e "\nexport PATH=\"\${HOME}/.pxvm/bin:\${PATH}\"" >> $pxvm_profile
   else
     echo -e "\033[33mInfo: PXVM already found in profile\033[0m"
   fi
