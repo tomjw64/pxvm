@@ -30,7 +30,7 @@ pxvm_initial_wd=$(pwd)
 pxvm_install_dir=${HOME}/.pxvm
 
 function pxvm_do_version() {
-  echo "PXVM Version: 0.0.3+"
+  echo "PXVM Version: 0.0.4+"
 }
 
 function pxvm_do_help() {
