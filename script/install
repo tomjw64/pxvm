@@ -1,8 +1,14 @@
 #! /usr/bin/env bash
 
+function pxvm_debug() {
+  [ "$DEBUG" ] && echo -e "\033[1mDebug: ${1}\033[0m"
+}
+
 function pxvm_install() {
-  local initial_wd=$(pwd)
-  local install_dir=${HOME}/.pxvm
+  local initial_wd
+  initial_wd=$(pwd)
+  local install_dir
+  install_dir=${HOME}/.pxvm
 
   # Function copied from the nvm repo
   # See https://github.com/creationix/nvm for license and copywright
@@ -53,62 +59,64 @@ function pxvm_install() {
     fi
   }
 
-  local pxvm_profile=$(pxvm_detect_profile)
-  [ $DEBUG ] && echo "Profile found: $pxvm_profile"
-  if [ -z pxvm_profile ]; then
+  local pxvm_profile
+  pxvm_profile=$(pxvm_detect_profile)
+  pxvm_debug "Profile found: ${pxvm_profile}"
+  if [ -z "$pxvm_profile" ]; then
     echo -e "\033[31mError: Could not detect a profile.\033[0m"
     return 1
   fi
 
   echo "Detected profile: ${pxvm_profile}"
   echo "Installing PXVM at ${install_dir}"
-  [ $DEBUG ] && echo "Present directory: ${initial_wd}"
+  pxvm_debug "Present directory: ${initial_wd}"
 
   if ! [ -d ./cmd/ ]; then
     echo -e "\033[31mError: Files not found. Is pxvm the pwd?\033[0m"
     return 1
   fi
 
-  [ $DEBUG ] && echo "Creating install directory: ${install_dir}"
-  [ -d $install_dir ] || mkdir $install_dir
-  [ $DEBUG ] && echo "Moving to install directory: ${install_dir}"
-  cd $install_dir
-  [ $DEBUG ] && echo "Creating install subdirectories"
+  pxvm_debug "Creating install directory: ${install_dir}"
+  [ -d "$install_dir" ] || mkdir "$install_dir"
+  pxvm_debug "Moving to install directory: ${install_dir}"
+  cd "$install_dir" || return 1
+  pxvm_debug "Creating install subdirectories"
   [ -d versions ] || mkdir versions
   [ -d bin ] || mkdir bin
 
-  [ $DEBUG ] && echo "Copying (and maybe overwriting) command into install bin"
-  cp ${initial_wd}/cmd/* ./bin/
+  pxvm_debug "Copying (and maybe overwriting) command into install bin"
+  cp "${initial_wd}/cmd/"* ./bin/
 
-  [ $DEBUG ] && echo "Clean up old exec path and clear path hash"
+  pxvm_debug "Clean up old exec path and clear path hash"
   local use_bin="./bin/prince"
   [ -f ${use_bin} ] && rm ${use_bin}
   hash -d prince 2>/dev/null
 
-  [ $DEBUG ] && echo "Attempting to make executable with the system version"
-  local system_prince_path=$(command -v prince)
-  if [ -n $system_prince_path ] && ! echo $system_prince_path | grep -qc ".pxvm"; then
-    [ $DEBUG ] && echo "System executable found at ${system_prince_path}"
+  pxvm_debug "Attempting to make executable with the system version"
+  local system_prince_path
+  system_prince_path=$(command -v prince)
+  if [ -n "$system_prince_path" ] && ! echo "$system_prince_path" | grep -qc ".pxvm"; then
+    pxvm_debug "System executable found at ${system_prince_path}"
     echo "#! /bin/bash" >> ${use_bin}
     echo "${system_prince_path} \$@" >> ${use_bin}
   else
-    [ $DEBUG ] && echo "No system executable of prince found"
+    pxvm_debug "No system executable of prince found"
     echo "echo \"No version of PrinceXML has been specified for use.\"" >> ${use_bin}
     echo "echo \"Try 'pxvm help' \"" >> ${use_bin}
   fi
   chmod +x ${use_bin}
   hash -d prince 2>/dev/null
 
-  if ! grep -qc "\.pxvm" $pxvm_profile; then
-    echo -e "\nexport PATH=\"\${HOME}/.pxvm/bin:\${PATH}\"" >> $pxvm_profile
+  if ! grep -qc "\.pxvm" "$pxvm_profile"; then
+    echo -e "\nexport PATH=\"\${HOME}/.pxvm/bin:\${PATH}\"" >> "$pxvm_profile"
   else
     echo -e "\033[33mInfo: PXVM already found in profile\033[0m"
   fi
 
-  [ $DEBUG ] && echo "Moving back to ${initial_wd}"
-  cd ${initial_wd}
+  pxvm_debug "Moving back to ${initial_wd}"
+  cd "${initial_wd}" || return 1
   echo -e "\033[32mInstallation successful.\033[0m"
 }
 
-pxvm_install $@
+pxvm_install "$@"
 return 0

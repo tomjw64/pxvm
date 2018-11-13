@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 function pxvm_debug() {
-  [ $DEBUG ] && echo -e "\033[1mDebug: ${1}\033[0m"
+  [ "$DEBUG" ] && echo -e "\033[1mDebug: ${1}\033[0m"
 }
 
 function pxvm_warn() {
@@ -21,7 +21,7 @@ function pxvm_success() {
 }
 
 pxvm_sub_command=${1}
-pxvm_debug "Got subcommand ${PXVM_SUB_COMMAND}"
+pxvm_debug "Got subcommand ${pxvm_sub_command}"
 shift
 pxvm_args=$*
 pxvm_arg_list=($pxvm_args)
@@ -53,65 +53,67 @@ function pxvm_do_help() {
 }
 
 function pxvm_do_add() {
-  if ! [ -d ${pxvm_install_dir} ]; then
+  if ! [ -d "${pxvm_install_dir}" ]; then
     pxvm_error "PXVM install directory not detected"
     exit 1
   fi
 
   local added_name=${pxvm_arg_list[0]}
   local added_path_relative=${pxvm_arg_list[1]}
-  if [ -z ${added_name} ] || [ -z ${added_path_relative} ]; then
+  if [ -z "${added_name}" ] || [ -z "${added_path_relative}" ]; then
     pxvm_error "Not all arguments supplied"
     exit 1
   fi
 
-  local added_path_basename=$(basename ${added_path_relative})
+  local added_path_basename
+  added_path_basename=$(basename "${added_path_relative}")
   local added_extracted_dirname=${added_path_basename%.tar.gz}
 
-  if ! [ -f ${added_path_relative} ]; then
+  if ! [ -f "${added_path_relative}" ]; then
     pxvm_error "Could not find relative file at ${added_path_relative}"
     exit 1
   fi
 
   local temp_dir=${pxvm_install_dir}/tmp
   pxvm_debug "Creating temp directory for extraction"
-  mkdir ${temp_dir}
+  mkdir "${temp_dir}"
   pxvm_debug "Extracting into temp directory"
-  tar -xzf ${added_path_relative} -C ${temp_dir}
+  tar -xzf "${added_path_relative}" -C "${temp_dir}"
 
   pxvm_debug "Moving to install directory: ${pxvm_install_dir}"
-  cd ${pxvm_install_dir}
+  cd "${pxvm_install_dir}" || exit 1
 
   local version_dir=versions/${added_name}
-  if [ -d ${version_dir} ]; then
+  if [ -d "${version_dir}" ]; then
     pxvm_debug "Removing old version of name ${added_name}"
-    rm -rf ${version_dir}
+    rm -rf "${version_dir}"
   fi
   pxvm_debug "Creating version directory: ${version_dir}"
-  mkdir ${version_dir}
+  mkdir "${version_dir}"
   pxvm_debug "Copying extracted files to version directory"
-  cp -r tmp/${added_extracted_dirname}/lib/prince/* ${version_dir}
+  cp -r "tmp/${added_extracted_dirname}/lib/prince/"* "${version_dir}"
   
   pxvm_debug "Removing temp directory"
   rm -rf ./tmp
 
   pxvm_debug "Moving back to ${pxvm_initial_wd}"
-  cd ${pxvm_initial_wd}
+  cd "${pxvm_initial_wd}" || exit 1
 
   pxvm_success "Added Prince XML version with name ${added_name}"
 }
 
 function pxvm_do_list() {
   local versions_path=${pxvm_install_dir}/versions
-  if ! [ -d ${versions_path} ]; then
+  if ! [ -d "${versions_path}" ]; then
     pxvm_error "Prince versions install directory not detected"
     exit 1
   fi
 
-  local currently_using=$(cat ${pxvm_install_dir}/bin/prince)
+  local currently_using
+  currently_using=$(cat "${pxvm_install_dir}/bin/prince")
   local using_location=${currently_using#*/bash}
   using_location=${using_location%\$@}
-  using_location=$(echo $using_location | tr -d '\n')
+  using_location=$(echo "$using_location" | tr -d '\n')
   currently_using_version=${using_location/#*\/versions\//}
   if [ "$using_location" = "$currently_using_version" ]; then
     currently_using_version="system"
@@ -120,23 +122,23 @@ function pxvm_do_list() {
   fi
 
   pxvm_debug "Moving to versions directory: ${versions_path}"
-  cd ${versions_path}
+  cd "${versions_path}" || exit 1
   echo "Available Prince XML Versions:"
-  local prince_versions=($(find */ -maxdepth 0 -type d 2>/dev/null))
-  if [ -z ${prince_versions[0]} ]; then
+  local prince_versions=($(find ./* -maxdepth 0 -type d 2>/dev/null))
+  if [ -z "${prince_versions[0]}" ]; then
     echo "None"
   else
-    for i in ${prince_versions[@]}; do echo -e "\033[96m${i%%/}\033[0m"; done
+    for i in "${prince_versions[@]}"; do echo -e "\033[96m${i#./}\033[0m"; done
   fi
 
   echo -e "Currently Using: \033[96m${currently_using_version} @ ${using_location}\033[0m"
 
-  cd ${pxvm_initial_wd}
+  cd "${pxvm_initial_wd}" || exit 1
 }
 
 function pxvm_do_system() {
   pxvm_debug "Moving to install directory: ${pxvm_install_dir}"
-  cd $pxvm_install_dir
+  cd "$pxvm_install_dir" || exit 1
 
   local use_bin="./bin/prince"
   local tmp_prince="./tmp_prince"
@@ -146,8 +148,9 @@ function pxvm_do_system() {
   hash -d prince 2>/dev/null
   
   pxvm_debug "Attempting to make executable with the system version"
-  local system_prince_path=$(command -v prince)
-  if [ -n $system_prince_path ] && ! echo $system_prince_path | grep -qc ".pxvm"; then
+  local system_prince_path
+  system_prince_path=$(command -v prince)
+  if [ -n "$system_prince_path" ] && ! echo "$system_prince_path" | grep -qc ".pxvm"; then
     pxvm_debug "Clean up old exec path and clear path hash"
     [ -f ${tmp_prince} ] && rm ${tmp_prince}
 
@@ -169,20 +172,20 @@ function pxvm_do_system() {
 function pxvm_do_use() {
   local use_name=${pxvm_arg_list[0]}
   
-  if [ -z ${use_name} ]; then
+  if [ -z "${use_name}" ]; then
     pxvm_error "Not all arguments supplied"
     exit 1
   fi
 
-  if ! [ -d ${pxvm_install_dir} ]; then
+  if ! [ -d "${pxvm_install_dir}" ]; then
     pxvm_error "PXVM install directory not detected"
     exit 1
   fi
   pxvm_debug "Moving to install directory: ${pxvm_install_dir}"
-  cd ${pxvm_install_dir}
+  cd "${pxvm_install_dir}" || exit 1
 
   local use_path=versions/${use_name}
-  if ! [ -d ${use_path} ]; then
+  if ! [ -d "${use_path}" ]; then
     pxvm_error "Cannot find added Prince version with name ${use_name}"
     exit 1
   fi
@@ -198,12 +201,20 @@ function pxvm_do_use() {
   chmod +x ${use_bin}
 
   pxvm_debug "Moving back to ${pxvm_initial_wd}"
-  cd ${pxvm_initial_wd}
+  cd "${pxvm_initial_wd}" || exit 1
 
   pxvm_success "Now using Prince XML with name ${use_name}"
 }
 
-if [ -z ${pxvm_sub_command} ]; then
+function pxvm_get_prince_version() {
+  #TODO: Use this function to get the version of an added Prince XML version
+    # so that the name arg to `pxvm add` is no longer required
+  local prince_path
+  prince_path=${1}
+  echo "${prince_path} --version" | sed -r 's/Prince ([0-9]+[0-9.]+) .*/\1/'
+}
+
+if [ -z "${pxvm_sub_command}" ]; then
   pxvm_do_help
 else
   case "${pxvm_sub_command}" in
